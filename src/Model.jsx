@@ -1,9 +1,11 @@
+// Model.jsx
+
 import { useGLTF } from '@react-three/drei';
 import { useEffect, useRef } from 'react';
 import { Box3, Vector3 } from 'three';
 
-export default function Model(props) {
-  const { scene } = useGLTF('/models/v2.glb');
+export default function Model({ modelPath, ...props }) {
+  const { scene } = useGLTF(modelPath);
   const modelRef = useRef();
 
   useEffect(() => {
@@ -11,7 +13,7 @@ export default function Model(props) {
       const box = new Box3().setFromObject(modelRef.current);
       const center = new Vector3();
       box.getCenter(center);
-      modelRef.current.position.sub(center); // Center the model
+      modelRef.current.position.sub(center); // center the model
       console.log('Model centered to:', center);
     }
   }, [scene]);
@@ -20,7 +22,7 @@ export default function Model(props) {
     <primitive
       ref={modelRef}
       object={scene}
-      scale={4} // Increase size
+      scale={8}
       {...props}
     />
   );
