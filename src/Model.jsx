@@ -18,11 +18,14 @@ export default function Model({ modelPath, ...props }) {
     }
   }, [scene]);
 
+  // choose scale based on modelPath
+  const scale = modelPath.includes("Male") ? 7.7 : 7;
+
   return (
     <primitive
       ref={modelRef}
       object={scene}
-      scale={8}
+      scale={scale}
       {...props}
     />
   );
