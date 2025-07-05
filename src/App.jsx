@@ -10,10 +10,11 @@ import { getFemaleAnatomicalLabel } from './utils/femaleAnatomyMap';
 function App() {
   const [modelPath, setModelPath] = useState('/models/MaleHead.glb');
   const [activeModel, setActiveModel] = useState('male');
-  const [pinRetention, setPinRetention] = useState(true); // keep vs. clear pins
+  const [pinRetention, setPinRetention] = useState(true);
   const [lastLabel, setLastLabel] = useState('');
 
-  // separate pin arrays
+  const [pinScale, setPinScale] = useState(0.3);  // always resets on refresh
+
   const [malePins, setMalePins] = useState([]);
   const [femalePins, setFemalePins] = useState([]);
 
@@ -25,7 +26,12 @@ function App() {
     }
   }, [modelPath]);
 
-  // handle clicks
+  useEffect(() => {
+    const enableRightClick = (e) => e.stopPropagation();
+    window.addEventListener('contextmenu', enableRightClick);
+    return () => window.removeEventListener('contextmenu', enableRightClick);
+  }, []);
+
   const handleModelClick = (position) => {
     let label = 'Unknown Region';
     if (activeModel === 'male') {
@@ -43,21 +49,15 @@ function App() {
         setFemalePins([{ position, label }]);
       }
     }
-    setLastLabel(label);  // update the last-clicked anatomical label
+    setLastLabel(label);
     console.log(`Pin added on ${activeModel}:`, label, position);
   };
 
   const displayedPins = activeModel === 'male' ? malePins : femalePins;
 
-  useEffect(() => {
-    const enableRightClick = (e) => e.stopPropagation();
-    window.addEventListener('contextmenu', enableRightClick);
-    return () => window.removeEventListener('contextmenu', enableRightClick);
-  }, []);
-
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      {/* buttons */}
+      {/* controls */}
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
         <button onClick={() => setModelPath('/models/MaleHead.glb')}>Male</button>
         <button onClick={() => setModelPath('/models/FemaleHead.glb')}>Female</button>
@@ -67,6 +67,33 @@ function App() {
         >
           Pin Retention: {pinRetention ? 'ON' : 'OFF'}
         </button>
+        <div
+          style={{
+            marginLeft: '10px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'black',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '4px'
+          }}
+        >
+          <label htmlFor="pin-size">Pin Size</label>
+          <input
+            id="pin-size"
+            type="range"
+            min="0.1"
+            max="2"
+            step="0.05"
+            value={pinScale}
+            onChange={(e) => {
+              const next = parseFloat(e.target.value);
+              setPinScale(next);
+            }}
+          />
+          <span>{pinScale.toFixed(2)}</span>
+        </div>
       </div>
 
       {/* anatomical label bottom right */}
@@ -87,7 +114,6 @@ function App() {
       </div>
 
       <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
-        {/* lighting */}
         <ambientLight intensity={1.0} />
         <directionalLight
           position={[5, 5, 5]}
@@ -105,15 +131,12 @@ function App() {
           intensity={2}
         />
 
-        {/* model */}
         <Model modelPath={modelPath} />
 
-        {/* render pins smaller */}
         {displayedPins.map((pin, index) => (
-          <Pin key={index} position={pin.position} label={pin.label} scale={0.3} />
+          <Pin key={index} position={pin.position} label={pin.label} scale={pinScale} />
         ))}
 
-        {/* click handler */}
         <ClickHandler onClick={handleModelClick} />
 
         <OrbitControls enablePan={true} enableZoom={true} />
